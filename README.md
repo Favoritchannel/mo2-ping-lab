@@ -47,7 +47,7 @@ Per path: **median · average · min/max · p95 · jitter (σ) · packet loss**,
 ## Running it
 
 ```bash
-git clone https://github.com/YOUR_NAME/mo2-ping-lab
+git clone https://github.com/Favoritchannel/mo2-ping-lab
 cd mo2-ping-lab
 npm install
 npm start          # dev run
