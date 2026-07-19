@@ -1,70 +1,95 @@
-# MO2 Ping Lab
+<div align="center">
 
-**A network path analyzer for [Mortal Online 2](https://www.mortalonline2.com/) — measure your real route to the NA (Sarducaa) server, compare it against a relay, and find out whether a "ping booster" would actually help you *before* paying for one.**
+# ⚔ MO2 Ping Lab
 
-> ⚠️ Community test tool. Not affiliated with or endorsed by Star Vault AB.
-> It only *measures* network latency — it does not read game memory, inject anything, or interact with the game client in any way.
+**Measure it before you pay for it.**
+A network path analyzer for [Mortal Online 2](https://www.mortalonline2.com/) that shows whether a ping booster or relay would *actually* improve your connection — with real numbers, not marketing.
 
-## Why this exists
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Windows-0078d4.svg)](#running-it)
+[![Built with Electron](https://img.shields.io/badge/built%20with-Electron%2033-47848f.svg)](https://www.electronjs.org/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#contributing)
 
-Mortal Online 2 is a first-person melee MMO where parry timing lives and dies by latency — and more importantly, by latency *stability*. The NA server for the Sarducaa continent is hosted at OVH Beauharnois (Québec, Canada).
+<img src="docs/screenshot.png" alt="MO2 Ping Lab — path comparison dashboard" width="850">
 
-Commercial ping boosters (ExitLag, GearUP, LagoFast…) reroute your game traffic through their private networks. Sometimes that genuinely helps — bad ISP peering, evening congestion, packet loss. Often it does nothing, because your direct route is already optimal, and you're paying a subscription for +3 ms of overhead.
+</div>
 
-**The only honest way to know is to measure.** That's what this tool does:
+---
 
-- your **actual current route** to the game server (through a VPN/tunnel if one is active),
-- the **direct path** to the game's datacenter,
-- optionally, a path through **your own WireGuard relay** (see below).
+## The problem
 
-It then tells you which path wins — by median RTT *and* tail stability (p95) — and keeps a run history so you can compare "before" and "after" enabling a tunnel.
+Mortal Online 2 is a first-person melee MMO. Parries and swing timing live and die by latency — and even more by latency **stability**: a connection that sits at 45 ms and spikes to 150 ms feels far worse than a flat 60 ms.
+
+The NA (Sarducaa) server runs out of OVH Beauharnois, Québec. Commercial boosters — ExitLag, GearUP, LagoFast — reroute your game traffic through private networks and charge a subscription for it. Sometimes that genuinely helps: bad ISP peering, evening congestion, packet loss. Just as often it does **nothing**, because your direct route is already near-optimal, and you're paying monthly for +3 ms of tunnel overhead.
+
+There was no honest way for a player to know which case they're in. Now there is.
+
+## What it does
+
+One click measures three network paths **in parallel** and tells you which one wins:
+
+| Path | What it tells you |
+|---|---|
+| **Game server** (current route) | How the game actually plays right now — measured through your VPN/tunnel if one is active |
+| **Direct** (game's datacenter) | Your ISP's raw route to OVH Beauharnois, bypassing any tunnel |
+| **Relay** *(optional)* | The same trip through your own WireGuard relay placed next to the game server |
+
+Per path: **median · average · min/max · p95 · jitter (σ) · packet loss**, plus a sparkline of every sample. Runs are stored locally, and the app automatically pairs a *tunnel-off* run with a *tunnel-on* run into a **Before / After** comparison.
 
 ## How it works
 
-- **RTT = TCP handshake time.** No ICMP, no raw sockets, no admin rights, locale-independent. The game server blocks ping (ICMP) anyway — but it answers TCP on its game port, and a SYN→SYN-ACK round trip is exactly one network RTT.
-- **Warm-up discard.** The first connection on Windows routinely costs hundreds of extra milliseconds (route/ARP warm-up). It is measured and thrown away so it can't wreck the jitter stats.
-- **25 samples per path** (configurable), all paths measured in parallel. Reported per path: median, average, min/max, p95, jitter (σ), packet loss, and a sparkline of every sample.
-- **Verdict.** Paths are scored as `median + (p95 − median) / 2` — a path that's occasionally terrible loses to one that's consistently okay, which is what melee timing actually feels like.
-- **Before/After.** Every run is stored locally (`%APPDATA%/MO2 Ping Lab/history.json`). The app automatically pairs a tunnel-off run with a tunnel-on run and shows the delta per path.
-- **Tunnel awareness.** If a WireGuard interface (`wg*`) is up, the app detects it — and the "game server" path then measures the route *through* the tunnel, because that's how you'd actually play.
+- **RTT = TCP handshake time.** The game server drops ICMP (standard DDoS hygiene), so `ping` is useless against it — but it answers TCP on its game port, and one SYN → SYN-ACK round trip is exactly one network RTT. No admin rights, no raw sockets, no locale-dependent parsing.
+- **Warm-up discard.** The first connection on Windows routinely costs hundreds of extra milliseconds (route/ARP warm-up). It's measured and thrown away so a single artifact can't wreck the jitter stats.
+- **Tail-aware verdict.** Paths are scored as `median + (p95 − median) / 2`. A route that's *occasionally terrible* loses to one that's *consistently okay* — which is exactly how melee timing feels in game.
+- **Tunnel awareness.** An active WireGuard interface (`wg*`) is detected automatically; the "game server" path then measures through it, because that's how you'd actually play.
+- **Zero game interaction.** The tool talks to network endpoints only. It never reads game memory, never touches the game client, never injects anything.
 
 ## Running it
 
 ```bash
+git clone https://github.com/YOUR_NAME/mo2-ping-lab
+cd mo2-ping-lab
 npm install
 npm start          # dev run
-npm run dist       # build a portable Windows .exe into dist/
+npm run dist       # portable Windows .exe → dist/
 ```
 
-Requirements: Node 20+, Windows. The built exe is portable — no install, no admin needed for measuring.
+Requirements: **Node 20+, Windows**. The built exe is portable — no installation, and measuring needs no admin rights.
 
-## Adding your own relay
+## Bring your own relay
 
-The whole point of a relay is to sit *next to the game server* (OVH Beauharnois / Montréal region) and give your traffic a cleaner route than your ISP's default. A $0 Oracle Cloud free-tier VM in the Montréal region with WireGuard works fine.
+The point of a relay is to sit *physically next to the game server* (Montréal region for Sarducaa) and give your traffic a cleaner route than your ISP's default transit. A free-tier cloud VM with WireGuard is enough — measured from a Montréal datacenter, the hop to the game's datacenter is **~1.7 ms**.
 
-Drop a `paths.json` next to the exe (or edit the bundled one) — see [`paths.example.json`](paths.example.json):
+Drop a `paths.json` next to the exe (overrides the bundled config, no rebuild) — see [`paths.example.json`](paths.example.json):
 
-```json
+```jsonc
 {
   "id": "relay",
   "name": "Via my relay",
-  "host": "YOUR_RELAY_IP",
+  "host": "YOUR_RELAY_IP",   // any TCP port your relay answers on
   "port": 22,
-  "extraMs": 1.7,
+  "extraMs": 1.7,            // relay → datacenter RTT, measured from the relay
   "role": "relay"
 }
 ```
 
-`extraMs` is the relay→datacenter RTT you measured from the relay itself. `port` is any TCP port your relay answers on. The external `paths.json` overrides the bundled config — no rebuild needed.
+**Honest expectations, from real measurements:** if you're in the US East/Midwest, your direct route is probably already near-optimal and a relay adds ~3–5 ms for nothing. Relays win when your ISP's route to Québec is congested or lossy — common from Eastern Europe. Measure, don't guess.
 
-Expectation management, from real measurements: if you're geographically close (US East/Midwest) your direct route is probably already near-optimal and a relay adds ~3–5 ms of overhead for nothing. The relay wins when your ISP's route to Québec is congested or lossy — common from Eastern Europe. **Measure, don't guess.**
+## Roadmap
 
-## Dev notes
+- [ ] EU entry node support (two-hop relay chains)
+- [ ] Signed builds (no SmartScreen prompt)
+- [ ] Configurable sample count / interval from the UI
+- [ ] Linux / macOS build targets
 
-- `PINGLAB_AUTOTEST=C:\path\shot.png npm start` — runs one measurement, saves a window screenshot, exits (used for CI-less self-testing).
-- The UI background is any `renderer/bg.png` you provide (not shipped in the repo).
-- Private builds can bundle `paths.private.json` (gitignored) and a WireGuard client config; the public build contains neither.
+## Contributing
+
+Issues and PRs are welcome — especially measurement reports from different regions/ISPs (attach the Before/After screenshot). Dev loop: `PINGLAB_AUTOTEST=path\to\shot.png npm start` runs one full measurement, saves a window screenshot, and exits.
+
+## Disclaimer
+
+Community tool. Not affiliated with or endorsed by Star Vault AB. "Mortal Online" is a trademark of Star Vault AB — the name is used here only to describe compatibility.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+[MIT](LICENSE)
