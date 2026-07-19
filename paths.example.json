@@ -1,0 +1,37 @@
+{
+  "gameName": "Mortal Online 2 — NA (Sarducaa)",
+  "samples": 25,
+  "timeoutMs": 2000,
+  "paths": [
+    {
+      "id": "game",
+      "name": "Игровой сервер",
+      "hint": "текущий маршрут — как реально играется сейчас",
+      "host": "148.113.214.4",
+      "port": 3724,
+      "extraMs": 0,
+      "intervalMs": 600,
+      "role": "current"
+    },
+    {
+      "id": "direct",
+      "name": "Прямой путь",
+      "hint": "до дата-центра игры (OVH Beauharnois), мимо туннеля",
+      "host": "51.222.154.207",
+      "port": 443,
+      "extraMs": 0,
+      "intervalMs": 400,
+      "role": "direct"
+    },
+    {
+      "id": "relay",
+      "name": "Через мой релей",
+      "hint": "свой WireGuard-релей рядом с сервером",
+      "host": "YOUR_RELAY_IP",
+      "port": 22,
+      "extraMs": 1.7,
+      "intervalMs": 400,
+      "role": "relay"
+    }
+  ]
+}

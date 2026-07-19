@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>MO2 Ping Lab</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">⚔</div>
+      <div>
+        <h1>MO2 Ping Lab</h1>
+        <div class="sub" id="game-name">Mortal Online 2 — NA (Sarducaa)</div>
+      </div>
+    </div>
+    <div class="top-right">
+      <button class="tunnel-pill" id="tunnel-pill">
+        <span class="dot"></span><span id="tunnel-label">…</span>
+      </button>
+      <button id="run-btn" class="run-btn">Замерить</button>
+    </div>
+  </header>
+
+  <div class="progress-rail" id="progress-rail" hidden>
+    <div class="progress-fill" id="progress-fill"></div>
+  </div>
+
+  <section class="verdict" id="verdict" hidden>
+    <div class="verdict-icon" id="verdict-icon"></div>
+    <div class="verdict-body">
+      <div class="verdict-title" id="verdict-title"></div>
+      <div class="verdict-sub" id="verdict-sub"></div>
+    </div>
+    <div class="verdict-delta" id="verdict-delta"></div>
+  </section>
+
+  <section class="cards" id="cards"></section>
+
+  <section class="compare" id="compare" hidden>
+    <h2>До / После</h2>
+    <div class="compare-sub" id="compare-sub"></div>
+    <div class="compare-grid" id="compare-grid"></div>
+  </section>
+
+  <footer class="foot" id="foot"></footer>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

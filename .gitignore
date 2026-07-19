@@ -1,0 +1,13 @@
+# dependencies / build output
+node_modules/
+dist/
+
+# private: WireGuard keys and personal relay endpoints — never commit
+*.conf
+paths.private.json
+
+# copyrighted artwork (Star Vault promo art used in private builds only)
+renderer/bg.png
+
+# local test artifacts
+autotest*.png

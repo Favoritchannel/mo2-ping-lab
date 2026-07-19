@@ -1,0 +1,38 @@
+{
+  "name": "mo2-ping-lab",
+  "version": "1.0.0",
+  "description": "Ping comparison lab for Mortal Online 2 relay",
+  "main": "main.js",
+  "author": "Tom",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win portable"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "lab.pinglab.mo2",
+    "productName": "MO2 Ping Lab",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "paths.json",
+      "paths.private.json",
+      "wg-mo2.conf",
+      "renderer/**"
+    ],
+    "win": {
+      "target": "portable",
+      "signAndEditExecutable": false
+    },
+    "portable": {
+      "artifactName": "MO2-Ping-Lab.exe"
+    }
+  }
+}
