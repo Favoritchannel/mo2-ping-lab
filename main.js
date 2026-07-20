@@ -272,6 +272,7 @@ app.whenReady().then(() => {
     history: loadHistory(),
     tunnel: tunnelActive(),
     tunnelCtl: tunnelStatus(),
+    lang: process.env.PINGLAB_LANG || app.getLocale(),
   }));
   ipcMain.handle('tunnel-status', () => tunnelStatus());
   ipcMain.handle('tunnel-toggle', (_e, on) => tunnelToggle(on));

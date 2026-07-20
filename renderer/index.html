@@ -44,14 +44,14 @@
   <section class="monitor">
     <div class="mon-head">
       <div>
-        <h2>Монитор стабильности</h2>
-        <div class="mon-sub">живой график пинга до игрового сервера — видно каждый скачок</div>
+        <h2 id="mon-title">Монитор стабильности</h2>
+        <div class="mon-sub" id="mon-sub">живой график пинга до игрового сервера — видно каждый скачок</div>
       </div>
       <div class="mon-live" id="mon-live" hidden>
-        <span class="mini-live">сейчас <b id="mon-now">—</b></span>
-        <span class="mini-live">медиана <b id="mon-med">—</b></span>
+        <span class="mini-live"><span id="mon-now-k">сейчас</span> <b id="mon-now">—</b></span>
+        <span class="mini-live"><span id="mon-med-k">медиана</span> <b id="mon-med">—</b></span>
         <span class="mini-live">p95 <b id="mon-p95">—</b></span>
-        <span class="mini-live">потери <b id="mon-loss">—</b></span>
+        <span class="mini-live"><span id="mon-loss-k">потери</span> <b id="mon-loss">—</b></span>
       </div>
       <button id="mon-btn" class="mon-btn">Старт</button>
     </div>
@@ -59,7 +59,7 @@
   </section>
 
   <section class="compare" id="compare" hidden>
-    <h2>До / После</h2>
+    <h2 id="compare-title">До / После</h2>
     <div class="compare-sub" id="compare-sub"></div>
     <div class="compare-grid" id="compare-grid"></div>
   </section>

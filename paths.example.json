@@ -5,8 +5,10 @@
   "paths": [
     {
       "id": "game",
-      "name": "Игровой сервер",
-      "hint": "текущий маршрут — как реально играется сейчас",
+      "name": "Game server",
+      "name_ru": "Игровой сервер",
+      "hint": "current route — how the game actually plays right now",
+      "hint_ru": "текущий маршрут — как реально играется сейчас",
       "host": "148.113.214.4",
       "port": 3724,
       "extraMs": 0,
@@ -15,8 +17,10 @@
     },
     {
       "id": "direct",
-      "name": "Прямой путь",
-      "hint": "до дата-центра игры (OVH Beauharnois), мимо туннеля",
+      "name": "Direct path",
+      "name_ru": "Прямой путь",
+      "hint": "to the game's datacenter (OVH Beauharnois), bypassing any tunnel",
+      "hint_ru": "до дата-центра игры (OVH Beauharnois), мимо туннеля",
       "host": "51.222.154.207",
       "port": 443,
       "extraMs": 0,
@@ -25,8 +29,10 @@
     },
     {
       "id": "relay",
-      "name": "Через мой релей",
-      "hint": "свой WireGuard-релей рядом с сервером",
+      "name": "Via my relay",
+      "name_ru": "Через мой релей",
+      "hint": "your own WireGuard relay next to the game server",
+      "hint_ru": "свой WireGuard-релей рядом с сервером",
       "host": "YOUR_RELAY_IP",
       "port": 22,
       "extraMs": 1.7,
