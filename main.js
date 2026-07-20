@@ -101,9 +101,14 @@ function download(url, dest, redirects = 3) {
 async function installWireGuard() {
   const dest = path.join(os.tmpdir(), 'wireguard-installer.exe');
   await download(WG_INSTALLER_URL, dest);
-  // The installer elevates itself; wait until it exits, then re-check.
+  // Launching an installer that needs elevation via CreateProcess fails silently
+  // from a non-elevated app (ERROR_ELEVATION_REQUIRED) — go through the shell
+  // so Windows shows the UAC prompt.
   await new Promise((resolve, reject) =>
-    execFile(dest, err => (err ? reject(err) : resolve())));
+    execFile('powershell.exe', [
+      '-NoProfile', '-Command',
+      `Start-Process -FilePath '"${dest}"' -Verb RunAs -Wait`,
+    ], err => (err ? reject(err) : resolve())));
   return tunnelStatus();
 }
 
@@ -218,11 +223,29 @@ function createWindow() {
   return win;
 }
 
+let monitorTimer = null;
+
+function startMonitor(win) {
+  if (monitorTimer) return;
+  const cfg = loadConfig();
+  const target = cfg.paths.find(x => x.role === 'current');
+  monitorTimer = setInterval(async () => {
+    const ms = await tcpProbe(target.host, target.port, cfg.timeoutMs);
+    if (!win.isDestroyed()) win.webContents.send('monitor-sample', { at: Date.now(), ms });
+  }, 700);
+}
+
+function stopMonitor() {
+  clearInterval(monitorTimer);
+  monitorTimer = null;
+}
+
 app.whenReady().then(() => {
   const win = createWindow();
   if (process.env.PINGLAB_AUTOTEST) {
     win.webContents.once('did-finish-load', async () => {
-      await win.webContents.executeJavaScript("document.getElementById('run-btn').click()");
+      await win.webContents.executeJavaScript(
+        "document.getElementById('run-btn').click(); document.getElementById('mon-btn').click()");
       const poll = setInterval(async () => {
         const busy = await win.webContents.executeJavaScript(
           "document.getElementById('run-btn').disabled");
@@ -253,6 +276,15 @@ app.whenReady().then(() => {
   ipcMain.handle('tunnel-status', () => tunnelStatus());
   ipcMain.handle('tunnel-toggle', (_e, on) => tunnelToggle(on));
   ipcMain.handle('install-wireguard', () => installWireGuard());
+  ipcMain.handle('monitor-start', () => { startMonitor(win); return true; });
+  ipcMain.handle('monitor-stop', () => { stopMonitor(); return true; });
+  // One quick probe of the game path — used to confirm the tunnel really works
+  // right after it is enabled.
+  ipcMain.handle('quick-probe', async () => {
+    const cfg = loadConfig();
+    const t = cfg.paths.find(x => x.role === 'current');
+    return tcpProbe(t.host, t.port, cfg.timeoutMs);
+  });
   ipcMain.handle('capture', async (_e, file) => {
     const img = await win.webContents.capturePage();
     fs.writeFileSync(file, img.toPNG());

@@ -176,6 +176,47 @@ h1 { font-size: 19px; font-weight: 600; letter-spacing: 0.2px; }
 
 .range { color: var(--text-muted); font-size: 11.5px; }
 
+/* ---------- status line ---------- */
+.status-line {
+  background: var(--accent-soft);
+  border: 1px solid rgba(57, 135, 229, 0.35);
+  border-radius: 10px;
+  padding: 9px 14px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.status-line.ok { background: var(--good-soft); border-color: rgba(12, 163, 12, 0.35); }
+.status-line.err { background: var(--critical-soft); border-color: rgba(208, 59, 59, 0.4); }
+
+/* ---------- monitor ---------- */
+.monitor {
+  background: rgba(26, 26, 25, 0.72);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 20px 14px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.mon-head { display: flex; align-items: center; gap: 16px; }
+.mon-head h2 { font-size: 15px; font-weight: 600; }
+.mon-sub { color: var(--text-muted); font-size: 12.5px; margin-top: 2px; }
+.mon-live { display: flex; gap: 14px; margin-left: auto; }
+.mini-live { color: var(--text-muted); font-size: 12px; }
+.mini-live b { color: var(--text-primary); font-size: 14px; font-variant-numeric: tabular-nums; }
+.mon-btn {
+  margin-left: auto;
+  background: var(--surface-2); color: var(--text-primary);
+  border: 1px solid var(--border); border-radius: 10px;
+  font-size: 13.5px; font-weight: 600; font-family: inherit;
+  padding: 8px 18px; cursor: pointer;
+  transition: filter 0.15s;
+}
+.mon-live:not([hidden]) + .mon-btn { margin-left: 0; }
+.mon-btn:hover { filter: brightness(1.2); }
+.mon-btn.running { background: var(--critical-soft); border-color: rgba(208, 59, 59, 0.4); }
+.mon-chart { width: 100%; height: 140px; display: block; background: var(--surface-2); border-radius: 10px; }
+
 /* ---------- compare ---------- */
 .compare {
   background: rgba(26, 26, 25, 0.72);

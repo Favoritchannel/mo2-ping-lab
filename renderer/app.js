@@ -152,16 +152,32 @@ async function tunnelClick() {
   try {
     if (!c.wgInstalled) {
       $('tunnel-label').textContent = 'ставим WireGuard…';
+      setStatus('Скачиваем WireGuard с официального сайта… в окне Windows нажми «Да»');
       const st = await window.pinglab.installWireGuard();
       renderTunnel(st.active, st);
+      setStatus(st.wgInstalled
+        ? 'WireGuard установлен ✓ Окно WireGuard можно закрыть — им управляет это приложение. Теперь нажми «включить».'
+        : 'Не получилось установить WireGuard. Разреши запуск в окне Windows и попробуй ещё раз.',
+        st.wgInstalled ? 'ok' : 'err');
     } else {
       $('tunnel-label').textContent = c.active ? 'выключаем…' : 'включаем… (окно Windows — жми Да)';
       const st = await window.pinglab.tunnelToggle(!c.active);
       renderTunnel(st.active, st);
+      if (st.active) {
+        setStatus('Туннель включён, проверяем маршрут до игрового сервера…');
+        const probe = await window.pinglab.quickProbe();
+        setStatus(probe !== null
+          ? `Туннель работает ✓ Игровой сервер отвечает через релей за ${probe.toFixed(0)} мс. Нажми «Замерить» для полного сравнения.`
+          : 'Туннель поднят, но игровой сервер не ответил — проверь интернет или выключи другие VPN.',
+          probe !== null ? 'ok' : 'err');
+      } else {
+        setStatus('Туннель выключен — играешь напрямую.', '');
+      }
     }
   } catch {
     const st = await window.pinglab.tunnelStatus();
     renderTunnel(st.active, st);
+    setStatus('Действие отменено или не удалось. Если было окно Windows — нужно нажать «Да».', 'err');
   } finally {
     pill.classList.remove('busy');
   }
@@ -183,6 +199,97 @@ function renderAll(run, history, tunnel, ctl) {
   renderFoot(run);
 }
 
+function setStatus(text, cls) {
+  const el = $('status-line');
+  if (!text) { el.hidden = true; return; }
+  el.hidden = false;
+  el.className = `status-line ${cls || ''}`;
+  el.textContent = text;
+}
+
+/* ---------- live stability monitor ---------- */
+const MON_WINDOW = 240; // ~3 min at 700ms per probe
+let monRunning = false;
+let monSamples = [];
+
+function monStats() {
+  const ok = monSamples.filter(s => s.ms !== null).map(s => s.ms);
+  const lost = monSamples.length - ok.length;
+  if (!ok.length) return { now: null, med: null, p95: null, loss: 100 };
+  const sorted = [...ok].sort((a, b) => a - b);
+  const q = p => sorted[Math.min(sorted.length - 1, Math.floor(p * sorted.length))];
+  const lastOk = [...monSamples].reverse().find(s => s.ms !== null);
+  return { now: lastOk ? lastOk.ms : null, med: q(0.5), p95: q(0.95),
+           loss: (lost / monSamples.length) * 100 };
+}
+
+function drawMonitor() {
+  const svg = $('mon-chart');
+  const W = 960, H = 140, pad = 6;
+  if (!monSamples.length) { svg.innerHTML = ''; return; }
+  const ok = monSamples.filter(s => s.ms !== null).map(s => s.ms);
+  if (!ok.length) { svg.innerHTML = ''; return; }
+  const sorted = [...ok].sort((a, b) => a - b);
+  const med = sorted[Math.floor(sorted.length / 2)];
+  const lo = Math.min(...ok), hi = Math.max(...ok, med * 1.6);
+  const span = Math.max(hi - lo, 10);
+  const step = (W - pad * 2) / (MON_WINDOW - 1);
+  const y = v => pad + (H - pad * 2) * (1 - (v - lo) / span);
+  const x = i => pad + i * step;
+  const offset = MON_WINDOW - monSamples.length;
+
+  let d = '', lastNull = true;
+  const spikes = [], losses = [];
+  monSamples.forEach((s, i) => {
+    const xi = x(offset + i);
+    if (s.ms === null) {
+      losses.push(`<line x1="${xi.toFixed(1)}" y1="${pad}" x2="${xi.toFixed(1)}" y2="${H - pad}" stroke="var(--critical)" stroke-width="2" opacity="0.8"/>`);
+      lastNull = true;
+      return;
+    }
+    d += `${lastNull ? 'M' : 'L'}${xi.toFixed(1)},${y(s.ms).toFixed(1)}`;
+    lastNull = false;
+    if (s.ms > med * 1.5) {
+      spikes.push(`<circle cx="${xi.toFixed(1)}" cy="${y(s.ms).toFixed(1)}" r="3.5" fill="var(--critical)"/>`);
+    }
+  });
+  const medY = y(med).toFixed(1);
+  svg.innerHTML =
+    `<line x1="0" y1="${medY}" x2="${W}" y2="${medY}" stroke="var(--text-muted)" stroke-width="1" stroke-dasharray="4 5" opacity="0.5"/>` +
+    `<path d="${d}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>` +
+    spikes.join('') + losses.join('');
+}
+
+function monitorTick(sample) {
+  if (!monRunning) return;
+  monSamples.push(sample);
+  if (monSamples.length > MON_WINDOW) monSamples.shift();
+  const s = monStats();
+  $('mon-now').textContent = s.now === null ? '—' : `${fmt(s.now)} мс`;
+  $('mon-med').textContent = s.med === null ? '—' : `${fmt(s.med)} мс`;
+  $('mon-p95').textContent = s.p95 === null ? '—' : `${fmt(s.p95)} мс`;
+  $('mon-loss').textContent = `${fmt(s.loss)}%`;
+  drawMonitor();
+}
+
+async function monitorToggle() {
+  const btn = $('mon-btn');
+  if (monRunning) {
+    monRunning = false;
+    await window.pinglab.monitorStop();
+    btn.textContent = 'Старт';
+    btn.classList.remove('running');
+  } else {
+    monRunning = true;
+    monSamples = [];
+    $('mon-live').hidden = false;
+    $('mon-chart').hidden = false;
+    btn.textContent = 'Стоп';
+    btn.classList.add('running');
+    await window.pinglab.monitorStart();
+  }
+}
+
 async function init() {
   const state = await window.pinglab.getState();
   config = state.config;
@@ -190,6 +297,8 @@ async function init() {
   const last = state.history.at(-1) || null;
   renderAll(last, state.history, state.tunnel, state.tunnelCtl);
   $('tunnel-pill').addEventListener('click', tunnelClick);
+  $('mon-btn').addEventListener('click', monitorToggle);
+  window.pinglab.onMonitorSample(monitorTick);
 
   window.pinglab.onProgress(({ id, frac }) => {
     progress[id] = frac;
