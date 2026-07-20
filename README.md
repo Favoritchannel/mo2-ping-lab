@@ -10,7 +10,7 @@ A network path analyzer for [Mortal Online 2](https://www.mortalonline2.com/) th
 [![Built with Electron](https://img.shields.io/badge/built%20with-Electron%2033-47848f.svg)](https://www.electronjs.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#contributing)
 
-<img src="docs/screenshot.png" alt="MO2 Ping Lab — path comparison dashboard" width="850">
+<img src="docs/screenshot-en.png" alt="MO2 Ping Lab — path comparison dashboard" width="850">
 
 </div>
 
